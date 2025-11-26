@@ -16,7 +16,7 @@ const CONFIG = {
     SUPABASE_URL: 'https://rgkkadtaiivcuuvekwdo.supabase.co', // Replace with your Supabase URL
     SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJna2thZHRhaWl2Y3V1dmVrd2RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NzYyOTUsImV4cCI6MjA3OTU1MjI5NX0.cTAGAOIT_rpnQGNMO9v-o1PIHwyoB3r8xSPaqVccFrI', 
     // Replace with your Supabase anon key ^^^^^^^^^^^^^^^^^^^^^^
-    TABLE_NAME: 'room_stats',
+    TABLE_NAME: 'detections', // Replace with your table name if different
     REFRESH_INTERVAL: 30000, // 30 seconds
     MAX_RETRIES: 3,
 };
@@ -98,19 +98,38 @@ async function fetchLatestRoomCounts() {
     }
 
     try {
-        const { data, error } = await supabaseClient
+        // Try with person_count first (backend uses this), fall back to people_count
+        let { data, error } = await supabaseClient
             .from(CONFIG.TABLE_NAME)
-            .select('room_id, timestamp, people_count')
+            .select('room_id, timestamp, person_count')
             .order('timestamp', { ascending: false })
             .limit(500); // Fetch more to ensure we get one per room
+
+        // If person_count fails, try people_count
+        if (error && error.message.includes('person_count')) {
+            const response = await supabaseClient
+                .from(CONFIG.TABLE_NAME)
+                .select('room_id, timestamp, people_count')
+                .order('timestamp', { ascending: false })
+                .limit(500);
+            data = response.data;
+            error = response.error;
+        }
 
         if (error) {
             throw error;
         }
 
+        // Normalize column name: convert person_count to people_count for consistency
+        const normalizedData = data.map(record => ({
+            room_id: record.room_id,
+            timestamp: record.timestamp,
+            people_count: record.people_count || record.person_count || 0
+        }));
+
         // Group by room_id and keep only the latest record per room
         const roomMap = {};
-        for (const record of data) {
+        for (const record of normalizedData) {
             if (!roomMap[record.room_id]) {
                 roomMap[record.room_id] = record;
             }
@@ -153,7 +172,17 @@ async function loadRoomData() {
     } catch (error) {
         console.error('Error loading room data:', error);
         updateStatus('Failed to load data', 'error');
-        showError(`Failed to load room data: ${error.message}`);
+        
+        let errorMsg = error.message;
+        
+        // Provide helpful guidance based on error type
+        if (errorMsg.includes('Could not find the table')) {
+            errorMsg += '\n\n🔍 Troubleshooting steps:\n1. Open debug.html to diagnose\n2. Check table name in Supabase\n3. Verify RLS policies allow SELECT';
+        } else if (errorMsg.includes('relation') && errorMsg.includes('does not exist')) {
+            errorMsg += '\n\n⚠️ Table does not exist. Create it in Supabase SQL Editor (see TROUBLESHOOTING.md)';
+        }
+        
+        showError(`Failed to load room data: ${errorMsg}`);
         showEmptyState();
     } finally {
         isLoading = false;
