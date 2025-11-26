@@ -23,8 +23,42 @@
 
         <!-- Status Bar -->
         <div class="status-bar">
-            <div id="status" class="status-text">Initializing...</div>
-            <div id="lastUpdate" class="last-update">Last updated: --:--:--</div>
+            <div id="connectionStatus" class="connection-status">
+                <span id="statusText" class="status-text">Initializing...</span>
+            </div>
+            <div id="lastUpdateText" class="last-update">Last updated: --:--:--</div>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="statistics-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Occupancy</div>
+                    <div id="totalOccupancy" class="stat-value">--</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏢</div>
+                <div class="stat-content">
+                    <div class="stat-label">Active Rooms</div>
+                    <div id="activeRooms" class="stat-value">--</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-content">
+                    <div class="stat-label">Busy Rooms</div>
+                    <div id="busyRooms" class="stat-value">--</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <div class="stat-label">Empty Rooms</div>
+                    <div id="emptyRooms" class="stat-value">--</div>
+                </div>
+            </div>
         </div>
 
         <!-- Loading Indicator -->
@@ -34,7 +68,9 @@
         </div>
 
         <!-- Error Message -->
-        <div id="errorMessage" class="error-message hidden"></div>
+        <div id="errorAlert" class="error-message hidden">
+            <div id="errorMessage"></div>
+        </div>
 
         <!-- Room Grid -->
         <main class="room-grid" id="roomGrid">
