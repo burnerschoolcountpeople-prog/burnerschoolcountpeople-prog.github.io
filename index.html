@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Occupancy Monitor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>Room Occupancy Monitor</h1>
+                <p class="subtitle">Real-time visitor distribution across rooms</p>
+            </div>
+            <button id="refreshBtn" class="refresh-btn" aria-label="Refresh data">
+                <span class="refresh-icon">↻</span>
+                Refresh
+            </button>
+        </header>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div id="status" class="status-text">Initializing...</div>
+            <div id="lastUpdate" class="last-update">Last updated: --:--:--</div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="loading-indicator hidden">
+            <div class="spinner"></div>
+            <p>Loading room data...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message hidden"></div>
+
+        <!-- Room Grid -->
+        <main class="room-grid" id="roomGrid">
+            <!-- Room cards will be populated here -->
+        </main>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state hidden">
+            <p>No rooms available or data could not be loaded.</p>
+            <p class="text-muted">Check your Supabase connection and ensure rooms have data.</p>
+        </div>
+    </div>
+
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Application Script -->
+    <script src="script.js"></script>
+</body>
+</html>
