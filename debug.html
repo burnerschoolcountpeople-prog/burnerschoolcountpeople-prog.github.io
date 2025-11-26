@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Connection Debugger</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .section {
+            background: #2d2d2d;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007acc;
+        }
+        .success { border-left-color: #4ec9b0; }
+        .error { border-left-color: #f48771; }
+        .warning { border-left-color: #dcdcaa; }
+        h2 { margin-top: 0; color: #569cd6; }
+        pre {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover { background: #005a9e; }
+        .log { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Supabase Connection Debugger</h1>
+    
+    <div class="section">
+        <h2>Configuration</h2>
+        <pre id="config">Loading...</pre>
+    </div>
+
+    <div class="section">
+        <h2>Tests</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="testConnection()">Test Connection</button>
+        <button onclick="testTableAccess()">Test Table Access</button>
+        <button onclick="listTables()">List Available Tables</button>
+    </div>
+
+    <div class="section">
+        <h2>Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Configuration (same as main app)
+        const CONFIG = {
+            SUPABASE_URL: 'https://rgkkadtaiivcuuvekwdo.supabase.co',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJna2thZHRhaWl2Y3V1dmVrd2RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NzYyOTUsImV4cCI6MjA3OTU1MjI5NX0.cTAGAOIT_rpnQGNMO9v-o1PIHwyoB3r8xSPaqVccFrI',
+            TABLE_NAME: 'detections'
+        };
+
+        let supabaseClient;
+
+        // Display configuration
+        document.getElementById('config').textContent = JSON.stringify({
+            URL: CONFIG.SUPABASE_URL,
+            TABLE_NAME: CONFIG.TABLE_NAME,
+            ANON_KEY: CONFIG.SUPABASE_ANON_KEY.substring(0, 20) + '...'
+        }, null, 2);
+
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+            results.appendChild(div);
+        }
+
+        function logJSON(label, data) {
+            log(`<strong>${label}:</strong><pre>${JSON.stringify(data, null, 2)}</pre>`);
+        }
+
+        async function testConnection() {
+            log('Testing Supabase connection...', 'info');
+            try {
+                supabaseClient = window.supabase.createClient(
+                    CONFIG.SUPABASE_URL,
+                    CONFIG.SUPABASE_ANON_KEY
+                );
+                log('✓ Supabase client created successfully', 'success');
+                return true;
+            } catch (error) {
+                log(`✗ Failed to create client: ${error.message}`, 'error');
+                logJSON('Error details', error);
+                return false;
+            }
+        }
+
+        async function testTableAccess() {
+            log(`Testing access to table: ${CONFIG.TABLE_NAME}...`, 'info');
+            
+            if (!supabaseClient) {
+                await testConnection();
+            }
+
+            try {
+                // Try to query the table
+                const { data, error, count } = await supabaseClient
+                    .from(CONFIG.TABLE_NAME)
+                    .select('*', { count: 'exact', head: false })
+                    .limit(1);
+
+                if (error) {
+                    log(`✗ Error accessing table: ${error.message}`, 'error');
+                    logJSON('Error details', error);
+                    
+                    // Suggest fixes
+                    if (error.message.includes('Could not find')) {
+                        log('⚠️ Table not found. Possible causes:', 'warning');
+                        log('1. Table name is incorrect (check for typos)', 'warning');
+                        log('2. Table does not exist in database', 'warning');
+                        log('3. Table is in a different schema', 'warning');
+                        log('→ Try clicking "List Available Tables" to see what exists', 'warning');
+                    }
+                    return false;
+                }
+
+                log(`✓ Successfully accessed table: ${CONFIG.TABLE_NAME}`, 'success');
+                logJSON('Sample data', data);
+                log(`Total records: ${count !== null ? count : 'unknown'}`, 'info');
+                return true;
+            } catch (error) {
+                log(`✗ Exception: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function listTables() {
+            log('Attempting to discover available tables...', 'info');
+            
+            if (!supabaseClient) {
+                await testConnection();
+            }
+
+            // Try common table names
+            const commonNames = [
+                'detections',      // Your actual table name
+                'room_stats',
+                'visitor_counts',
+                'people_count',
+                'occupancy'
+            ];
+
+            log('Testing common table names...', 'info');
+            
+            for (const tableName of commonNames) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from(tableName)
+                        .select('*')
+                        .limit(1);
+
+                    if (!error) {
+                        log(`✓ Found table: <strong>${tableName}</strong>`, 'success');
+                        if (data && data.length > 0) {
+                            logJSON(`${tableName} columns`, Object.keys(data[0]));
+                        }
+                    }
+                } catch (e) {
+                    // Silently continue
+                }
+            }
+
+            log('⚠️ Note: Supabase anon key may not have permission to list all tables', 'warning');
+            log('→ Check your Supabase dashboard > Table Editor to see all tables', 'info');
+        }
+
+        async function checkRLS() {
+            log('Checking Row Level Security (RLS) policies...', 'info');
+            
+            log('⚠️ RLS policies can block anon key access even if table exists', 'warning');
+            log('→ Go to Supabase Dashboard > Authentication > Policies', 'info');
+            log('→ Ensure there is a SELECT policy for anon role', 'info');
+        }
+
+        async function runAllTests() {
+            document.getElementById('results').innerHTML = '';
+            log('=== Starting Diagnostic Tests ===', 'info');
+            
+            const connected = await testConnection();
+            if (!connected) return;
+            
+            await testTableAccess();
+            await listTables();
+            await checkRLS();
+            
+            log('=== Tests Complete ===', 'info');
+            log('📋 Next steps:', 'info');
+            log('1. Check your Supabase dashboard for the correct table name', 'info');
+            log('2. Verify RLS policies allow SELECT for anon role', 'info');
+            log('3. Update CONFIG.TABLE_NAME in script.js if needed', 'info');
+        }
+
+        // Run tests on load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>
