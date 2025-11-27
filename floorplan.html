@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building Floor Plan - Visitor Guide</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏢</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="floorplan-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🏢 Building Navigation</h1>
+                <p class="subtitle">Interactive floor plans for route planning</p>
+            </div>
+            <div class="header-actions">
+                <a href="index.html" class="btn-secondary">
+                    📊 Dashboard View
+                </a>
+                <button id="backToOverviewBtn" class="btn-secondary hidden">
+                    ← Back to Overview
+                </button>
+                <button id="refreshBtn" class="refresh-btn" aria-label="Refresh data">
+                    <span class="refresh-icon">↻</span>
+                    Refresh
+                </button>
+            </div>
+        </header>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div id="connectionStatus" class="connection-status">
+                <span id="statusText" class="status-text">Loading...</span>
+            </div>
+            <div id="lastUpdateText" class="last-update">Last updated: --:--:--</div>
+        </div>
+
+        <!-- Building Overview (Initial View) -->
+        <div id="buildingOverview" class="building-overview">
+            <h2 class="section-title">Select a Floor</h2>
+            
+            <!-- Quick Stats -->
+            <div class="building-stats">
+                <div class="stat-card-compact">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Total Building Occupancy</div>
+                        <div id="buildingTotalOccupancy" class="stat-value">--</div>
+                    </div>
+                </div>
+                <div class="stat-card-compact">
+                    <div class="stat-icon">📍</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Active Rooms</div>
+                        <div id="buildingActiveRooms" class="stat-value">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floor Selector Grid -->
+            <div class="floor-grid" id="floorGrid">
+                <!-- Floors will be dynamically generated -->
+            </div>
+        </div>
+
+        <!-- Detailed Floor View (Shown when floor is selected) -->
+        <div id="floorDetailView" class="floor-detail-view hidden">
+            <div class="floor-detail-header">
+                <h2 id="floorTitle" class="section-title">Floor 4</h2>
+                <div class="floor-stats">
+                    <div class="floor-stat">
+                        <span class="floor-stat-label">Floor Occupancy:</span>
+                        <span id="floorOccupancy" class="floor-stat-value">-- people</span>
+                    </div>
+                    <div class="floor-stat">
+                        <span class="floor-stat-label">Active Rooms:</span>
+                        <span id="floorActiveRooms" class="floor-stat-value">-- / 10</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floor Map Container -->
+            <div class="floor-map-container">
+                <div class="floor-map-wrapper">
+                    <img id="floorMapImage" src="assets/floormaps/4F.jpg" alt="Floor Plan" class="floor-map-image">
+                    
+                    <!-- Room Overlays (positioned over map) -->
+                    <div id="roomOverlays" class="room-overlays">
+                        <!-- Dynamically positioned room indicators -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Legend -->
+            <div class="floor-legend">
+                <h3>Occupancy Levels</h3>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <div class="legend-indicator empty"></div>
+                        <span>Empty (0)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-indicator light"></div>
+                        <span>Light (1-8)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-indicator moderate"></div>
+                        <span>Moderate (9-20)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-indicator busy"></div>
+                        <span>Busy (21+)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-indicator no-camera"></div>
+                        <span>No Camera</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Details List -->
+            <div class="room-list">
+                <h3>Room Details</h3>
+                <div id="floorRoomList" class="room-list-grid">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="loading-indicator hidden">
+            <div class="spinner"></div>
+            <p>Loading floor plan data...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorAlert" class="error-message hidden">
+            <div id="errorMessage"></div>
+        </div>
+    </div>
+
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Floor Plan Script -->
+    <script src="floorplan-script.js"></script>
+</body>
+</html>
