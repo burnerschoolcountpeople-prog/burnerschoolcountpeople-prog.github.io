@@ -4,31 +4,97 @@ A lightweight, fast, and maintainable static website that displays live room occ
 
 ## 🎯 Overview
 
-This frontend displays real-time visitor distribution across rooms by fetching data from a Supabase PostgreSQL database. The backend (YOLO-based image processing system) continuously updates room occupancy counts, which are displayed here with a modern security monitoring dashboard.
+This frontend displays real-time visitor distribution across rooms by fetching data from a Supabase PostgreSQL database. The backend (YOLO-based image processing system) continuously updates room occupancy counts, which are displayed here with a modern security monitoring dashboard and interactive floor plans.
 
 **Data Flow:**
 ```
 Backend (YOLO Processing) → Supabase Database → Frontend (This App) → Display
 ```
 
+**Two Display Modes:**
+1. **Dashboard View** (`index.html`) - Real-time room occupancy cards for monitoring
+2. **Floor Plan View** (`floorplan.html`) - Interactive building navigation for visitors
+
+## 🏢 Camera ID Convention
+
+**Important:** This system uses a standardized camera numbering scheme across the 7-floor building.
+
+### Camera Numbering System
+
+- **Format**: `XYY` where:
+  - `X` = Floor number (1-7)
+  - `YY` = Camera number on that floor (01-10)
+
+- **Range**: Each floor has 10 cameras
+  - Floor 1: Cameras 101-110
+  - Floor 2: Cameras 201-210
+  - Floor 3: Cameras 301-310
+  - Floor 4: Cameras 401-410
+  - Floor 5: Cameras 501-510
+  - Floor 6: Cameras 601-610
+  - Floor 7: Cameras 701-710
+
+### Camera Positioning Rules
+
+**Lower camera IDs = More left/down position on the floor**
+
+- Cameras are numbered from **left to right** and **bottom to top**
+- No cameras in lavatories (lat) or prep rooms
+- Only classrooms, labs, and public spaces have cameras
+
+### Example: 4th Floor (Chemistry/Physics/Biology Labs)
+
+| Room Name | Location | Camera ID |
+|-----------|----------|-----------|
+| Chemistry Lab | Far left | **401** |
+| Physics Lab | Center-left | **402** |
+| Biology Lab | Center-right | **403** |
+| Lab Prep Room | (No camera) | - |
+| Classroom 4A | Left side | **405** |
+| Classroom 4B | Center | **406** |
+| Classroom 4C | Center-right | **407** |
+| 6B Classroom (Room 413) | Far right | **410** |
+
+**Database Convention:** Room IDs in the database can be flexible formats like:
+- `"401"` (direct camera ID)
+- `"room-401"` 
+- `"camera_401"`
+- `"chemistry-lab-401"`
+
+The system automatically extracts the 3-digit camera ID from any room_id format.
+
 ## ✨ Features
 
-### Core Functionality
+### Two Display Modes
+
+#### 1. Dashboard View (`index.html`)
+**Purpose:** Real-time monitoring for security guards and staff
+
 - **Live Occupancy Display**: Real-time people count per room
 - **Building Statistics**: Total occupancy, active rooms, busy rooms, empty rooms
 - **4-Tier Status System**: Empty (blue) → Light (green) → Moderate (amber) → Busy (red)
 - **Capacity Visualization**: Animated progress bars showing room fullness
 - **Data Staleness Detection**: Automatic warnings for data older than 5 minutes
 - **Filter Controls**: Show all rooms, occupied only, or empty only
-- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
 
-### User Experience
-- **Dark Theme**: Reduces eye strain for 24/7 monitoring
+#### 2. Floor Plan View (`floorplan.html`)
+**Purpose:** Interactive navigation for visitors planning routes
+
+- **Building Overview**: See all 7 floors at a glance with occupancy status
+- **Floor Selection**: Click any floor to see detailed room layout
+- **Interactive Floor Maps**: Visual overlays showing real-time occupancy on actual floor plans
+- **Room-by-Room Details**: Detailed list of all rooms with camera IDs
+- **Smart Navigation**: Easily switch between floors or return to overview
+- **Visitor-Friendly**: Designed for route planning and finding available spaces
+
+### Common Features
+
+- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
 - **Manual Refresh**: Update data on demand with debounced clicks
-- **Auto-refresh Capability**: Optional 30-second auto-refresh (disabled by default)
 - **Relative Timestamps**: "2m ago" format for intuitive time display
 - **Error Handling**: Graceful error messages with actionable guidance
 - **Loading States**: Visual feedback during data fetching
+- **Dark Theme**: Modern color scheme (Brand: #102c52, Accent: #d3efef, Action: #d91821)
 
 ### Technical Features
 - **Zero Dependencies**: Pure JavaScript, no build tools required
@@ -529,17 +595,86 @@ Before deploying, verify:
 
 ```
 /
-├── index.html           # Main HTML structure
-├── styles.css           # Modern dark theme CSS (800+ lines)
-├── script.js            # Application logic (500+ lines)
-├── debug.html           # Connection diagnostic tool
-├── README.md            # This file
-├── TROUBLESHOOTING.md   # Detailed troubleshooting guide
-├── QUICK_FIX.md         # Quick reference for common issues
-├── NEW_UI_GUIDE.md      # User guide for security guards
-├── UI_REDESIGN.md       # Design documentation
-└── future_plan.md       # Planned enhancements
+├── index.html              # Dashboard view - Real-time monitoring
+├── floorplan.html          # Floor plan view - Interactive building navigation
+├── styles.css              # Shared styles (800+ lines)
+├── floorplan-styles.css    # Floor plan specific styles
+├── script.js               # Dashboard logic (500+ lines)
+├── floorplan-script.js     # Floor plan logic
+├── assets/
+│   └── floormaps/          # Floor plan images
+│       └── 4F.jpg          # 4th floor map (example)
+├── debug.html              # Connection diagnostic tool
+├── README.md               # This file
+├── TROUBLESHOOTING.md      # Detailed troubleshooting guide
+├── MAINTENANCE.md          # Maintenance and code quality guide
+└── future_plan.md          # Planned enhancements
 ```
+
+## 🏗️ Adding Floor Maps
+
+### How to Add New Floor Plans
+
+1. **Prepare Floor Plan Image:**
+   - Format: JPG or PNG
+   - Naming: `XF.jpg` (e.g., `1F.jpg`, `2F.jpg`, `3F.jpg`)
+   - Place in: `assets/floormaps/`
+
+2. **Update Configuration:**
+   Edit `floorplan-script.js` line ~30:
+   ```javascript
+   FLOORS: [
+       { number: 1, name: '1st Floor', hasMap: true, mapFile: '1F.jpg' },
+       { number: 2, name: '2nd Floor', hasMap: true, mapFile: '2F.jpg' },
+       // ... update hasMap: true and add mapFile
+   ]
+   ```
+
+3. **Define Room Positions:**
+   Edit `floorplan-script.js` line ~40:
+   ```javascript
+   const FLOOR_ROOM_POSITIONS = {
+       1: { // 1st Floor
+           101: { x: 15, y: 20, name: 'Main Lobby' },
+           102: { x: 35, y: 20, name: 'Reception' },
+           // Add all 10 cameras for the floor
+           // x, y are percentages (0-100) of image dimensions
+       },
+       2: { // 2nd Floor
+           201: { x: 20, y: 25, name: 'Conference Room A' },
+           // ...
+       }
+   };
+   ```
+
+4. **Position Coordinates:**
+   - `x`: Percentage from left edge (0 = far left, 100 = far right)
+   - `y`: Percentage from top edge (0 = top, 100 = bottom)
+   - Use image editing software to measure positions
+   - Tip: Open floor plan in browser, use browser dev tools to get pixel coordinates, calculate percentages
+
+### Example: Measuring Room Positions
+
+1. Open `4F.jpg` in image editor (1000px wide, 800px tall)
+2. Find Chemistry Lab at pixel (150, 160)
+3. Calculate: x = (150/1000) × 100 = 15%, y = (160/800) × 100 = 20%
+4. Add to config: `401: { x: 15, y: 20, name: 'Chemistry Lab' }`
+
+### Using the Floor Plan View
+
+1. **Visit:** `https://yourdomain.github.io/floorplan.html`
+2. **Select a Floor:** Click on any floor card (1F - 7F)
+3. **View Room Layout:** See which rooms are busy or available
+4. **Plan Your Route:** Choose less crowded rooms
+5. **Return to Overview:** Click "Back to Overview" to see all floors
+
+### Using the Dashboard View
+
+1. **Visit:** `https://yourdomain.github.io/index.html`
+2. **See All Rooms:** Grid view of all rooms with live counts
+3. **Filter Rooms:** Use "All", "Occupied", or "Empty" filters
+4. **Check Status:** Color-coded indicators show occupancy levels
+5. **Refresh Data:** Click refresh button for latest information
 
 **Option B: Local Testing**
 ```bash
