@@ -43,35 +43,35 @@ const CONFIG = {
 // Note: Positions will need to be adjusted based on actual floor map layouts
 const FLOOR_ROOM_POSITIONS = {
     '-1': { // Playground Floor
-        'Fitness Centre': { x: 25, y: 50, name: 'Fitness Centre' },
-        'Canteen': { x: 75, y: 50, name: 'Canteen' }
+        'Fitness Centre': { x: 31, y: 25, name: 'Fitness Centre' },
+        'Canteen': { x: 25, y: 60, name: 'Canteen' }
     },
     0: { // Ground Floor
-        'G7': { x: 30, y: 50, name: 'G7' },
-        'VA': { x: 70, y: 50, name: 'VA' }
+        'G7': { x: 25, y: 65, name: 'G7' },
+        'VA': { x: 25, y: 50, name: 'VA' }
     },
     1: { // 1st Floor
-        '105': { x: 15, y: 30, name: '105' },
-        '106': { x: 35, y: 30, name: '106' },
-        '107': { x: 55, y: 30, name: '107' },
-        'STEM Maker Lab': { x: 75, y: 30, name: 'STEM Maker Lab' },
-        'Chinese Academy': { x: 50, y: 70, name: 'Chinese Academy' }
+        '105': { x: 17, y: 37, name: '105' },
+        '106': { x: 34, y: 37, name: '106' },
+        '107': { x: 51, y: 37, name: '107' },
+        'STEM Maker Lab': { x: 20, y: 70, name: 'STEM Maker Lab' },
+        'Chinese Academy': { x: 68, y: 30, name: 'Chinese Academy' }
     },
     2: { // 2nd Floor
-        '201': { x: 10, y: 25, name: '201' },
+        '201': { x: 17, y: 25, name: '201' },
         '202': { x: 25, y: 25, name: '202' },
-        '203': { x: 40, y: 25, name: '203' },
-        '204': { x: 55, y: 25, name: '204' },
-        '205': { x: 70, y: 25, name: '205' },
+        '203': { x: 34, y: 25, name: '203' },
+        '204': { x: 51, y: 25, name: '204' },
+        '205': { x: 68, y: 25, name: '205' },
         '209': { x: 85, y: 25, name: '209' },
-        'Home Economics Room': { x: 50, y: 70, name: 'Home Economics Room' }
+        'Home Economics Room': { x: 25, y: 58, name: 'Home Economics Room' }
     },
     3: { // 3rd Floor
-        'Phy Lab': { x: 30, y: 50, name: 'Physics Lab' },
-        'Bio Lab': { x: 70, y: 50, name: 'Biology Lab' }
+        'Phy Lab': { x: 25, y: 50, name: 'Physics Lab' },
+        'Bio Lab': { x: 25, y: 70, name: 'Biology Lab' }
     },
     4: { // 4th Floor
-        'Chem Lab': { x: 50, y: 50, name: 'Chemistry Lab' }
+        'Chem Lab': { x: 25, y: 70, name: 'Chemistry Lab' }
     },
     6: { // 6th Floor
         'Library': { x: 50, y: 50, name: 'Library' }

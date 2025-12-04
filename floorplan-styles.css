@@ -214,12 +214,16 @@
     border-radius: 0.5rem;
     border: 2px solid var(--brand-secondary);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    opacity: 0.95;
+    opacity: 0.92;
     transition: opacity var(--transition-base);
+    /* Reduce harsh white and blend with dark background */
+    filter: brightness(0.9) contrast(1.05);
+    background: #f5f5f5;
 }
 
 .floor-map-image:hover {
-    opacity: 1;
+    opacity: 0.98;
+    filter: brightness(0.95) contrast(1.05);
 }
 
 /* Room Overlays */
