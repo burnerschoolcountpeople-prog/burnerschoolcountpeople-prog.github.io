@@ -26,13 +26,13 @@ const CONFIG = {
         MODERATE: 20
     },
     FLOORS: [
-        { number: -1, name: 'Playground Floor', hasMap: true, mapFile: 'playground.jpg' },
-        { number: 0, name: 'Ground Floor', hasMap: true, mapFile: 'ground_floor.jpg' },
-        { number: 1, name: '1st Floor', hasMap: true, mapFile: 'first_floor.jpg' },
-        { number: 2, name: '2nd Floor', hasMap: true, mapFile: 'second floor.jpg' },
-        { number: 3, name: '3rd Floor', hasMap: true, mapFile: 'third_floor.jpg' },
-        { number: 4, name: '4th Floor', hasMap: true, mapFile: 'fourth_floor.jpg' },
-        { number: 6, name: '6th Floor', hasMap: false }
+        { number: -1, name: 'Playground Floor', shortName: 'Playground', hasMap: true, mapFile: 'playground.jpg' },
+        { number: 0, name: 'Ground Floor', shortName: 'Ground', hasMap: true, mapFile: 'ground_floor.jpg' },
+        { number: 1, name: '1st Floor', shortName: '1st', hasMap: true, mapFile: 'first_floor.jpg' },
+        { number: 2, name: '2nd Floor', shortName: '2nd', hasMap: true, mapFile: 'second floor.jpg' },
+        { number: 3, name: '3rd Floor', shortName: '3rd', hasMap: true, mapFile: 'third_floor.jpg' },
+        { number: 4, name: '4th Floor', shortName: '4th', hasMap: true, mapFile: 'fourth_floor.jpg' },
+        { number: 6, name: '6th Floor', shortName: '6th', hasMap: false }
     ]
 };
 
@@ -72,8 +72,10 @@ const FLOOR_ROOM_POSITIONS = {
     },
     4: { // 4th Floor
         'Chem Lab': { x: 50, y: 50, name: 'Chemistry Lab' }
+    },
+    6: { // 6th Floor
+        'Library': { x: 50, y: 50, name: 'Library' }
     }
-    // 6th Floor (Library) has no map available
 };
 
 // ============================================
@@ -207,28 +209,57 @@ async function loadAllRoomData() {
         
         if (error) throw error;
         
-        // Parse room_id to extract camera IDs (e.g., "401" from room names)
-        allRoomData = {};
+        // Import FIXED_ROOMS structure from script.js
+        const FIXED_ROOMS = [
+            { room_id: 'Fitness Centre', display_name: 'Fitness Centre', floor: 'Playground', floor_order: -1 },
+            { room_id: 'Canteen', display_name: 'Canteen', floor: 'Playground', floor_order: -1 },
+            { room_id: 'G7', display_name: 'G7', floor: 'Ground', floor_order: 0 },
+            { room_id: 'VA', display_name: 'VA', floor: 'Ground', floor_order: 0 },
+            { room_id: '105', display_name: '105', floor: '1st', floor_order: 1 },
+            { room_id: '106', display_name: '106', floor: '1st', floor_order: 1 },
+            { room_id: '107', display_name: '107', floor: '1st', floor_order: 1 },
+            { room_id: 'STEM Maker Lab', display_name: 'STEM Maker Lab', floor: '1st', floor_order: 1 },
+            { room_id: 'Chinese Academy', display_name: 'Chinese Academy', floor: '1st', floor_order: 1 },
+            { room_id: '201', display_name: '201', floor: '2nd', floor_order: 2 },
+            { room_id: '202', display_name: '202', floor: '2nd', floor_order: 2 },
+            { room_id: '203', display_name: '203', floor: '2nd', floor_order: 2 },
+            { room_id: '204', display_name: '204', floor: '2nd', floor_order: 2 },
+            { room_id: '205', display_name: '205', floor: '2nd', floor_order: 2 },
+            { room_id: '209', display_name: '209', floor: '2nd', floor_order: 2 },
+            { room_id: 'Home Economics Room', display_name: 'Home Economics Room', floor: '2nd', floor_order: 2 },
+            { room_id: 'Phy Lab', display_name: 'Physics Lab', floor: '3rd', floor_order: 3 },
+            { room_id: 'Bio Lab', display_name: 'Biology Lab', floor: '3rd', floor_order: 3 },
+            { room_id: 'Chem Lab', display_name: 'Chemistry Lab', floor: '4th', floor_order: 4 },
+            { room_id: 'Library', display_name: 'Library', floor: '6th', floor_order: 6 }
+        ];
         
+        // Create map of fetched data with case-insensitive matching
+        const fetchedDataMap = {};
         for (const record of data) {
-            // Extract numeric camera ID from room_id
-            // Assumes format like "401", "room-401", "camera_401", etc.
-            const match = record.room_id.match(/(\d{3})/);
-            if (match) {
-                const cameraId = parseInt(match[1]);
-                
-                // Only keep if not already stored (latest due to ORDER BY)
-                if (!allRoomData[cameraId]) {
-                    allRoomData[cameraId] = {
-                        cameraId: cameraId,
-                        room_id: record.room_id,
-                        count: Math.max(0, parseInt(record.person_count) || 0),
-                        timestamp: record.timestamp,
-                        floor: Math.floor(cameraId / 100)
-                    };
-                }
+            const normalizedId = record.room_id.toLowerCase().trim();
+            if (!fetchedDataMap[normalizedId]) {
+                fetchedDataMap[normalizedId] = {
+                    count: Math.max(0, parseInt(record.person_count) || 0),
+                    timestamp: record.timestamp
+                };
             }
         }
+        
+        // Merge fixed rooms with fetched data
+        allRoomData = {};
+        FIXED_ROOMS.forEach(fixedRoom => {
+            const normalizedId = fixedRoom.room_id.toLowerCase().trim();
+            const fetchedData = fetchedDataMap[normalizedId];
+            
+            allRoomData[fixedRoom.room_id] = {
+                room_id: fixedRoom.room_id,
+                display_name: fixedRoom.display_name,
+                floor: fixedRoom.floor_order,
+                count: fetchedData ? fetchedData.count : 0,
+                timestamp: fetchedData ? fetchedData.timestamp : null,
+                hasData: !!fetchedData
+            };
+        });
         
         updateLastUpdateTime();
         updateStatus(`Connected • ${Object.keys(allRoomData).length} cameras`, 'success');
@@ -274,7 +305,7 @@ function renderBuildingOverview() {
         
         card.innerHTML = `
             <div class="floor-card-header">
-                <div class="floor-number">${floor.number}F</div>
+                <div class="floor-number">${floor.shortName}</div>
                 <div class="floor-status-badge ${statusClass}">
                     ${busyCount > 0 ? '🔴 Busy' : 
                       activeCount > 5 ? '🟡 Active' : 
@@ -362,7 +393,7 @@ function renderRoomOverlays(floorNumber, floorRooms) {
     }
     
     floorRooms.forEach(room => {
-        const pos = positions[room.cameraId];
+        const pos = positions[room.room_id];
         if (!pos) return; // Skip if no position defined
         
         const overlay = document.createElement('div');
@@ -373,15 +404,18 @@ function renderRoomOverlays(floorNumber, floorRooms) {
         const status = getOccupancyStatus(room.count);
         overlay.classList.add(`status-${status.status}`);
         
+        const displayCount = room.hasData ? room.count : '--';
+        
         overlay.innerHTML = `
-            <div class="room-overlay-indicator ${status.status}">
-                ${room.count}
+            <div class="room-overlay-indicator ${room.hasData ? status.status : 'no-data'}">
+                ${displayCount}
             </div>
-            <div class="room-overlay-label">${pos.name || `Room ${room.cameraId}`}</div>
+            <div class="room-overlay-label">${room.display_name}</div>
         `;
         
         // Tooltip on hover
-        overlay.title = `${pos.name || `Room ${room.cameraId}`}\n${room.count} people\nUpdated: ${formatTimestamp(room.timestamp)}`;
+        const timestampText = room.hasData ? formatTimestamp(room.timestamp) : 'No data yet';
+        overlay.title = `${room.display_name}\n${room.hasData ? room.count + ' people' : 'Awaiting data'}\nUpdated: ${timestampText}`;
         
         roomOverlays.appendChild(overlay);
     });
@@ -390,29 +424,28 @@ function renderRoomOverlays(floorNumber, floorRooms) {
 function renderFloorRoomList(floorRooms) {
     floorRoomList.innerHTML = '';
     
-    // Sort by camera ID
-    floorRooms.sort((a, b) => a.cameraId - b.cameraId);
+    // Sort by room name
+    floorRooms.sort((a, b) => a.display_name.localeCompare(b.display_name));
     
     floorRooms.forEach(room => {
         const status = getOccupancyStatus(room.count);
-        const positions = FLOOR_ROOM_POSITIONS[room.floor];
-        const roomName = positions && positions[room.cameraId] 
-            ? positions[room.cameraId].name 
-            : `Room ${room.cameraId}`;
         
         const card = document.createElement('div');
         card.className = 'room-list-item';
         
+        const timestampText = room.hasData ? formatTimestamp(room.timestamp) : 'Awaiting data';
+        const countText = room.hasData ? `${room.count} people` : 'No data';
+        
         card.innerHTML = `
             <div class="room-list-item-header">
-                <span class="room-list-item-name">${escapeHtml(roomName)}</span>
-                <span class="room-list-item-badge ${status.status}">${formatStatus(status.status)}</span>
+                <span class="room-list-item-name">${escapeHtml(room.display_name)}</span>
+                <span class="room-list-item-badge ${room.hasData ? status.status : 'no-data'}">${room.hasData ? formatStatus(status.status) : 'No Data'}</span>
             </div>
             <div class="room-list-item-body">
-                <div class="room-list-item-count">${status.icon} ${room.count} people</div>
-                <div class="room-list-item-time">${formatTimestamp(room.timestamp)}</div>
+                <div class="room-list-item-count">${room.hasData ? status.icon : '📍'} ${countText}</div>
+                <div class="room-list-item-time">${timestampText}</div>
             </div>
-            <div class="room-list-item-id">Camera ${room.cameraId}</div>
+            <div class="room-list-item-id">${room.room_id}</div>
         `;
         
         floorRoomList.appendChild(card);

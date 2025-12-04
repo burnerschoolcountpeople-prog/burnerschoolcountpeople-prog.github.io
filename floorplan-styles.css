@@ -201,7 +201,10 @@
     position: relative;
     width: 100%;
     overflow: hidden;
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #102c52 0%, #1a3d6b 100%);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-lg);
 }
 
 .floor-map-image {
@@ -209,6 +212,14 @@
     height: auto;
     display: block;
     border-radius: 0.5rem;
+    border: 2px solid var(--brand-secondary);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    opacity: 0.95;
+    transition: opacity var(--transition-base);
+}
+
+.floor-map-image:hover {
+    opacity: 1;
 }
 
 /* Room Overlays */
@@ -263,6 +274,12 @@
 
 .room-overlay-indicator.busy {
     background: var(--brand-action);
+}
+
+.room-overlay-indicator.no-data {
+    background: #6b7280;
+    opacity: 0.7;
+    border-style: dashed;
 }
 
 .room-overlay-label {
@@ -341,6 +358,12 @@
 
 .legend-indicator.no-camera {
     background: var(--text-dim);
+}
+
+.legend-indicator.no-data {
+    background: #6b7280;
+    opacity: 0.7;
+    border-style: dashed;
 }
 
 .legend-item span {
