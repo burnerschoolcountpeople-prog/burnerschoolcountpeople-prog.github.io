@@ -29,6 +29,43 @@ const CONFIG = {
 };
 
 // ============================================
+// Fixed Room Definitions (in floor order)
+// ============================================
+const FIXED_ROOMS = [
+    // Playground Floor (below ground)
+    { room_id: 'Fitness Centre', display_name: 'Fitness Centre', floor: 'Playground', floor_order: -1 },
+    { room_id: 'Canteen', display_name: 'Canteen', floor: 'Playground', floor_order: -1 },
+    
+    // Ground Floor
+    { room_id: 'G7', display_name: 'G7', floor: 'Ground', floor_order: 0 },
+    { room_id: 'VA', display_name: 'VA', floor: 'Ground', floor_order: 0 },
+    
+    // 1st Floor
+    { room_id: '105', display_name: '105', floor: '1st', floor_order: 1 },
+    { room_id: '106', display_name: '106', floor: '1st', floor_order: 1 },
+    { room_id: '107', display_name: '107', floor: '1st', floor_order: 1 },
+    { room_id: 'STEM Maker Lab', display_name: 'STEM Maker Lab', floor: '1st', floor_order: 1 },
+    { room_id: 'Chinese Academy', display_name: 'Chinese Academy', floor: '1st', floor_order: 1 },
+    
+    // 2nd Floor
+    { room_id: '201', display_name: '201', floor: '2nd', floor_order: 2 },
+    { room_id: '202', display_name: '202', floor: '2nd', floor_order: 2 },
+    { room_id: '203', display_name: '203', floor: '2nd', floor_order: 2 },
+    { room_id: '204', display_name: '204', floor: '2nd', floor_order: 2 },
+    { room_id: '205', display_name: '205', floor: '2nd', floor_order: 2 },
+    { room_id: '209', display_name: '209', floor: '2nd', floor_order: 2 },
+    { room_id: 'Home Economics Room', display_name: 'Home Economics Room', floor: '2nd', floor_order: 2 },
+    
+    // 3rd Floor
+    { room_id: 'Phy Lab', display_name: 'Physics Lab', floor: '3rd', floor_order: 3 },
+    { room_id: 'Bio Lab', display_name: 'Biology Lab', floor: '3rd', floor_order: 3 },
+    { room_id: 'Chem Lab', display_name: 'Chemistry Lab', floor: '3rd', floor_order: 3 },
+    
+    // 6th Floor
+    { room_id: 'Library', display_name: 'Library', floor: '6th', floor_order: 6 }
+];
+
+// ============================================
 // Global State
 // ============================================
 let supabaseClient = null;
@@ -136,7 +173,8 @@ function initializeSupabase() {
 // Data Fetching
 // ============================================
 /**
- * Fetch latest occupancy data for all rooms
+ * Fetch latest occupancy data for all rooms and merge with fixed room definitions
+ * Always returns all fixed rooms with latest data where available
  */
 async function fetchLatestRoomCounts() {
     if (!supabaseClient) {
@@ -149,7 +187,7 @@ async function fetchLatestRoomCounts() {
             .from(CONFIG.TABLE_NAME)
             .select('room_id, timestamp, person_count')
             .order('timestamp', { ascending: false })
-            .limit(500); // Fetch more to ensure we get one per room
+            .limit(500);
 
         // If person_count fails, try people_count
         if (error && error.message.includes('person_count')) {
@@ -166,26 +204,56 @@ async function fetchLatestRoomCounts() {
             throw error;
         }
 
-        // Normalize column name: convert person_count to people_count for consistency
+        // Normalize column name
         const normalizedData = data.map(record => {
             const count = record.people_count || record.person_count || 0;
             return {
                 room_id: record.room_id,
                 timestamp: record.timestamp,
-                // Ensure count is non-negative and a valid number
                 people_count: Math.max(0, parseInt(count, 10) || 0)
             };
         });
 
-        // Group by room_id and keep only the latest record per room
-        const roomMap = {};
+        // Create a map of fetched data by room_id (case-insensitive matching)
+        const fetchedDataMap = {};
         for (const record of normalizedData) {
-            if (!roomMap[record.room_id]) {
-                roomMap[record.room_id] = record;
+            const normalizedId = record.room_id.toLowerCase().trim();
+            if (!fetchedDataMap[normalizedId]) {
+                fetchedDataMap[normalizedId] = record;
             }
         }
 
-        return Object.values(roomMap);
+        // Merge fixed rooms with fetched data
+        const mergedRooms = FIXED_ROOMS.map(fixedRoom => {
+            const normalizedId = fixedRoom.room_id.toLowerCase().trim();
+            const fetchedData = fetchedDataMap[normalizedId];
+            
+            if (fetchedData) {
+                // Room has data from database
+                return {
+                    room_id: fixedRoom.room_id,
+                    display_name: fixedRoom.display_name,
+                    floor: fixedRoom.floor,
+                    floor_order: fixedRoom.floor_order,
+                    people_count: fetchedData.people_count,
+                    timestamp: fetchedData.timestamp,
+                    hasData: true
+                };
+            } else {
+                // Room slot without data yet
+                return {
+                    room_id: fixedRoom.room_id,
+                    display_name: fixedRoom.display_name,
+                    floor: fixedRoom.floor,
+                    floor_order: fixedRoom.floor_order,
+                    people_count: 0,
+                    timestamp: null,
+                    hasData: false
+                };
+            }
+        });
+
+        return mergedRooms;
     } catch (error) {
         console.error('Error fetching room data:', error);
         throw error;
@@ -209,15 +277,13 @@ async function loadRoomData() {
 
         const rooms = await fetchLatestRoomCounts();
 
-        if (rooms.length === 0) {
-            showEmptyState();
-            updateStatus('No rooms with data', 'warning');
-        } else {
-            hideEmptyState();
-            renderRoomCards(rooms);
-            updateStatistics(rooms);
-            updateStatus(`Connected • ${rooms.length} room(s)`, 'success');
-        }
+        // Always show the fixed rooms (they're returned even without data)
+        hideEmptyState();
+        renderRoomCards(rooms);
+        updateStatistics(rooms);
+        
+        const roomsWithData = rooms.filter(r => r.hasData).length;
+        updateStatus(`Connected • ${roomsWithData}/${FIXED_ROOMS.length} room(s) reporting`, 'success');
 
         updateLastUpdateTime();
     } catch (error) {
@@ -243,7 +309,7 @@ async function loadRoomData() {
 }
 
 /**
- * Render room cards to the grid with filtering
+ * Render room cards to the grid with filtering (always in floor order)
  */
 function renderRoomCards(rooms) {
     allRooms = rooms;
@@ -263,7 +329,18 @@ function renderRoomCards(rooms) {
         return;
     }
 
+    // Group rooms by floor for better visual organization
+    let currentFloor = null;
     filteredRooms.forEach((room) => {
+        // Add floor header if floor changes
+        if (room.floor !== currentFloor) {
+            const floorHeader = document.createElement('div');
+            floorHeader.className = 'floor-header';
+            floorHeader.innerHTML = `<h2 class="floor-title">${room.floor} Floor</h2>`;
+            roomGrid.appendChild(floorHeader);
+            currentFloor = room.floor;
+        }
+        
         const card = createRoomCard(room);
         roomGrid.appendChild(card);
     });
@@ -278,6 +355,50 @@ function createRoomCard(room) {
     card.dataset.roomId = room.room_id;
     card.dataset.count = room.people_count;
 
+    // Handle rooms without data yet
+    if (!room.hasData || !room.timestamp) {
+        card.classList.add('no-data');
+        card.innerHTML = `
+            <div class="room-header">
+                <div class="room-title-group">
+                    <span class="room-icon">📍</span>
+                    <h3 class="room-name">${escapeHtml(room.display_name)}</h3>
+                </div>
+                <div class="room-status-badge empty">
+                    <span class="status-dot"></span>
+                </div>
+            </div>
+            
+            <div class="room-body">
+                <div class="occupancy-display">
+                    <div class="occupancy-number" style="color: #6b7280">
+                        --
+                    </div>
+                    <div class="occupancy-label">
+                        No Data
+                    </div>
+                </div>
+                
+                <div class="capacity-bar-container">
+                    <div class="capacity-bar">
+                        <div class="capacity-fill empty" style="width: 0%"></div>
+                    </div>
+                    <div class="capacity-label">
+                        <span>Waiting for data...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="room-footer">
+                <div class="timestamp no-data">
+                    <span class="time-icon">⏳</span>
+                    <span>Awaiting first update</span>
+                </div>
+            </div>
+        `;
+        return card;
+    }
+
     const { status, color, icon, capacityPercent } = getOccupancyStatus(room.people_count);
     const formattedTime = formatTimestamp(room.timestamp);
     const isStale = isDataStale(room.timestamp);
@@ -290,7 +411,7 @@ function createRoomCard(room) {
         <div class="room-header">
             <div class="room-title-group">
                 <span class="room-icon">${icon}</span>
-                <h3 class="room-name">${escapeHtml(formatRoomName(room.room_id))}</h3>
+                <h3 class="room-name">${escapeHtml(room.display_name)}</h3>
             </div>
             <div class="room-status-badge ${status}">
                 <span class="status-dot"></span>
@@ -451,7 +572,7 @@ function updateLastUpdateTime() {
 }
 
 /**
- * Update building statistics
+ * Update building statistics (only count rooms with data)
  * @param {Array} rooms - Array of room objects
  */
 function updateStatistics(rooms) {
@@ -460,13 +581,16 @@ function updateStatistics(rooms) {
         return;
     }
 
-    const total = rooms.reduce((sum, room) => sum + (room.people_count || 0), 0);
-    const occupied = rooms.filter(room => room.people_count > 0).length;
-    const busy = rooms.filter(room => room.people_count > CONFIG.THRESHOLDS.MODERATE).length;
-    const empty = rooms.filter(room => room.people_count === 0).length;
+    // Filter to only rooms that have data
+    const roomsWithData = rooms.filter(room => room.hasData);
+    
+    const total = roomsWithData.reduce((sum, room) => sum + (room.people_count || 0), 0);
+    const occupied = roomsWithData.filter(room => room.people_count > 0).length;
+    const busy = roomsWithData.filter(room => room.people_count > CONFIG.THRESHOLDS.MODERATE).length;
+    const empty = roomsWithData.filter(room => room.people_count === 0).length;
     
     if (totalOccupancy) totalOccupancy.textContent = total;
-    if (activeRooms) activeRooms.textContent = occupied;
+    if (activeRooms) activeRooms.textContent = `${occupied}/${FIXED_ROOMS.length}`;
     if (busyRooms) busyRooms.textContent = busy;
     if (emptyRooms) emptyRooms.textContent = empty;
 }
