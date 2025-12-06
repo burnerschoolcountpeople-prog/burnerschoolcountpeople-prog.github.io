@@ -33,19 +33,19 @@ const CONFIG = {
 // ============================================
 const FIXED_ROOMS = [
     // Playground Floor (below ground)
-    { room_id: 'Fitness Centre', display_name: 'Fitness Centre', floor: 'Playground', floor_order: -1 },
-    { room_id: 'Canteen', display_name: 'Canteen', floor: 'Playground', floor_order: -1 },
+    { room_id: 'fitness-centre', display_name: 'Fitness Centre', floor: 'Playground', floor_order: -1 },
+    { room_id: 'canteen', display_name: 'Canteen', floor: 'Playground', floor_order: -1 },
     
     // Ground Floor
-    { room_id: 'G7', display_name: 'G7', floor: 'Ground', floor_order: 0 },
-    { room_id: 'VA', display_name: 'VA', floor: 'Ground', floor_order: 0 },
+    { room_id: 'g7', display_name: 'G7', floor: 'Ground', floor_order: 0 },
+    { room_id: 'va', display_name: 'VA', floor: 'Ground', floor_order: 0 },
     
     // 1st Floor
     { room_id: '105', display_name: '105', floor: '1st', floor_order: 1 },
     { room_id: '106', display_name: '106', floor: '1st', floor_order: 1 },
     { room_id: '107', display_name: '107', floor: '1st', floor_order: 1 },
-    { room_id: 'STEM Maker Lab', display_name: 'STEM Maker Lab', floor: '1st', floor_order: 1 },
-    { room_id: 'Chinese Academy', display_name: 'Chinese Academy', floor: '1st', floor_order: 1 },
+    { room_id: 'stem-maker-lab', display_name: 'STEM Maker Lab', floor: '1st', floor_order: 1 },
+    { room_id: 'chinese-academy', display_name: 'Chinese Academy', floor: '1st', floor_order: 1 },
     
     // 2nd Floor
     { room_id: '201', display_name: '201', floor: '2nd', floor_order: 2 },
@@ -54,17 +54,17 @@ const FIXED_ROOMS = [
     { room_id: '204', display_name: '204', floor: '2nd', floor_order: 2 },
     { room_id: '205', display_name: '205', floor: '2nd', floor_order: 2 },
     { room_id: '209', display_name: '209', floor: '2nd', floor_order: 2 },
-    { room_id: 'Home Economics Room', display_name: 'Home Economics Room', floor: '2nd', floor_order: 2 },
+    { room_id: 'home-economics-room', display_name: 'Home Economics Room', floor: '2nd', floor_order: 2 },
     
     // 3rd Floor
-    { room_id: 'Phy Lab', display_name: 'Physics Lab', floor: '3rd', floor_order: 3 },
-    { room_id: 'Bio Lab', display_name: 'Biology Lab', floor: '3rd', floor_order: 3 },
+    { room_id: 'phy-lab', display_name: 'Physics Lab', floor: '3rd', floor_order: 3 },
+    { room_id: 'bio-lab', display_name: 'Biology Lab', floor: '3rd', floor_order: 3 },
     
     // 4th Floor
-    { room_id: 'Chem Lab', display_name: 'Chemistry Lab', floor: '4th', floor_order: 4 },
+    { room_id: 'chem-lab', display_name: 'Chemistry Lab', floor: '4th', floor_order: 4 },
     
     // 6th Floor
-    { room_id: 'Library', display_name: 'Library', floor: '6th', floor_order: 6 }
+    { room_id: 'library', display_name: 'Library', floor: '6th', floor_order: 6 }
 ];
 
 // ============================================
